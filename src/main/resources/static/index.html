@@ -1,89 +1,85 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>CRM</title>
+    <title>CRM Mini App</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #111;
+            color: white;
+            text-align: center;
+            padding: 50px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+        }
+        #clients {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
 
 <h2>🔐 Login</h2>
-<input id="email" placeholder="email"><br>
-<input id="password" placeholder="password" type="password"><br>
+
+<input id="email" placeholder="Email"><br>
+<input id="password" type="password" placeholder="Password"><br>
+
 <button onclick="login()">Login</button>
 
-<hr>
+<h2>📋 Clients</h2>
+<button onclick="getClients()">Load Clients</button>
 
-<h2>👥 Clients</h2>
-<button onclick="loadClients()">Load Clients</button>
-<ul id="clients"></ul>
-
-<hr>
-
-<h2>➕ Add Client</h2>
-<input id="name" placeholder="name"><br>
-<input id="clientEmail" placeholder="email"><br>
-<input id="phone" placeholder="phone"><br>
-<button onclick="addClient()">Add</button>
+<div id="clients"></div>
 
 <script>
+    const API = "https://crm-qm7p.onrender.com";
 
     let token = "";
 
-    const API = "https://crm-production-f889.up.railway.app";
-
     async function login() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+
         const res = await fetch(API + "/auth/login", {
             method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({
-                email: document.getElementById("email").value,
-                password: document.getElementById("password").value
-            })
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
         });
 
         const data = await res.json();
-        token = data.token;
 
-        alert("Logged in!");
+        token = data.token;
+        localStorage.setItem("token", token);
+
+        alert("✅ Logged in!");
     }
 
-    async function loadClients() {
+    async function getClients() {
+        const savedToken = localStorage.getItem("token");
+
         const res = await fetch(API + "/clients", {
             headers: {
-                "Authorization": "Bearer " + token
+                "Authorization": "Bearer " + savedToken
             }
         });
 
         const data = await res.json();
 
-        const list = document.getElementById("clients");
-        list.innerHTML = "";
+        const container = document.getElementById("clients");
+        container.innerHTML = "";
 
         data.forEach(c => {
-            const li = document.createElement("li");
-            li.innerText = c.name + " (" + c.email + ")";
-            list.appendChild(li);
+            const div = document.createElement("div");
+            div.innerHTML = `
+                <b>${c.name}</b> - ${c.email} - ${c.phone}
+            `;
+            container.appendChild(div);
         });
     }
-
-    async function addClient() {
-        await fetch(API + "/clients", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token
-            },
-            body: JSON.stringify({
-                name: document.getElementById("name").value,
-                email: document.getElementById("clientEmail").value,
-                phone: document.getElementById("phone").value
-            })
-        });
-
-        alert("Client added!");
-        loadClients();
-    }
-
 </script>
 
 </body>
